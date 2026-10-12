@@ -1,32 +1,8 @@
 import gradio as gr
-import argparse
-import torch
-import torchvision.transforms as transforms
-from model import MNISTNet
-
 from PIL import Image
 import requests
 import io
 import numpy as np
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--model_path', type=str, default = '/home/raclot/AIF/AIF/weights/mnist_net.pth', help='path to model')
-args = parser.parse_args()
-
-model_path = args.model_path
-
-model = MNISTNet().to(device)
-# Load the model
-model.load_state_dict(torch.load(model_path))
-model.eval()
-
-transform = transforms.Compose([
-    transforms.Resize((28, 28)),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))
-])
 
 def recognize_digit(image):
     # the sketchpad returns a dict with a 'composite' key corresponding to the image
@@ -39,19 +15,12 @@ def recognize_digit(image):
     image = image.astype(np.uint8)
     # Convert the image to a PIL Image
     image = Image.fromarray(image)
-
-    img_pil = image
-
-    # Transform the PIL image
-    tensor = transform(img_pil).to(device)
-    tensor = tensor.unsqueeze(0)  # Add batch dimension
-    
-    # Make prediction
-    with torch.no_grad():
-        outputs = model(tensor)
-        _, predicted = outputs.max(1)
-    
-    return (int(predicted[0]))
+    # Convert the image to a binary file
+    img_binary = io.BytesIO()
+    image.save(img_binary, format="PNG")
+    # Send request to the API
+    response = requests.post("http://api:5075/predict", data=img_binary.getvalue())
+    return response.json()["prediction"]
 
 if __name__=='__main__':
 
@@ -62,4 +31,4 @@ if __name__=='__main__':
                 description="Draw a number on the sketchpad to see the model's prediction.",
                 )
     print("Starting Gradio app...")
-    interface.launch(server_name="0.0.0.0", server_port=7860, debug=True, share=True) 
+    interface.launch(server_name="0.0.0.0", server_port=7860) # the server will be accessible externally under this address   

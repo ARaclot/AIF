@@ -6,12 +6,14 @@ from PIL import Image
 import io
 from model import MNISTNet
 
+#Test cache
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 app = Flask(__name__)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_path', type=str, default = '/home/raclot/AIF/AIF/weights/mnist_net.pth', help='path to model')
+parser.add_argument('--model_path', type=str, default = r'C:\Users\aivan\OneDrive\Documents\5A\AIF\AIF\developpement\MNIST\weights\mnist_net.pth', help='path to model')
 args = parser.parse_args()
 
 model_path = args.model_path
